@@ -1,0 +1,18 @@
+[project]
+name = "pcasvd"
+version = "0.1.0"
+description = "PCA / SVD from scratch in NumPy."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Raphaël Laurent" }]
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]
+addopts = "-ra"
+# joblib (used by sklearn's dataset cache) triggers a NumPy 2.5 deprecation warning.
+filterwarnings = ["ignore:Setting the shape on a NumPy array:DeprecationWarning"]
+
+[tool.ruff]
+line-length = 120
