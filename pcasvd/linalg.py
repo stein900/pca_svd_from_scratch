@@ -122,3 +122,50 @@ def _normalise_columns(w: Array, norms: Array) -> Array:
     return np.divide(w, norms, out=np.zeros_like(w), where=norms > 0)
 
 
+def power_iteration_eigh(
+    a: Array, k: int, *, tol: float = 1e-10, max_iter: int = 10_000, seed: int = 0
+) -> tuple[Array, Array, NDArray[np.int64]]:
+    """Top-``k`` eigenpairs of a symmetric positive semi-definite matrix.
+
+    Power iteration with deflation by orthogonal projection: eigenpair ``i`` is
+    the dominant eigenpair of ``P A P`` with ``P = I - V_i V_i^T`` (``V_i`` the
+    eigenvectors already found). Eigenpair ``i`` stops when the residual
+    ``||A v - lambda_i v||`` drops below ``tol * lambda_i`` (relative accuracy,
+    even for small eigenvalues) or below the rounding floor ``n * eps * lambda_1``
+    (numerically null eigenvalues).
+
+    Returns eigenvalues (decreasing), eigenvectors as columns, and the number of
+    iterations spent on each eigenpair.
+    """
+    n = a.shape[0]
+    rng = np.random.default_rng(seed)
+    vals = np.zeros(k)
+    vecs = np.zeros((n, k))
+    iters = np.zeros(k, dtype=np.int64)
+    n_unconverged = 0
+    for i in range(k):
+        basis = vecs[:, :i]
+        v = rng.standard_normal(n)
+        v -= basis @ (basis.T @ v)
+        v /= np.linalg.norm(v)
+        lam, converged = 0.0, False
+        for it in range(1, max_iter + 1):
+            w = a @ v
+            w -= basis @ (basis.T @ w)  # deflation: stay orthogonal to found eigenvectors
+            lam = float(v @ w)  # Rayleigh quotient
+            lam_max = vals[0] if i else abs(lam)
+            if np.linalg.norm(w - lam * v) <= tol * abs(lam) + n * EPS * lam_max:
+                converged = True
+                break
+            v = w / np.linalg.norm(w)
+        n_unconverged += not converged
+        vals[i], vecs[:, i], iters[i] = lam, v, it
+    if n_unconverged:
+        warnings.warn(
+            f"Power iteration: {n_unconverged}/{k} eigenpairs hit max_iter={max_iter}.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    return vals, vecs, iters
+
+
