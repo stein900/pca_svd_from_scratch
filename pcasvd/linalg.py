@@ -169,3 +169,22 @@ def power_iteration_eigh(
     return vals, vecs, iters
 
 
+def randomized_svd(
+    a: Array, k: int, *, n_oversamples: int = 10, n_power_iter: int = 4, seed: int = 0
+) -> tuple[Array, Array, Array]:
+    """Rank-``k`` truncated SVD by randomized subspace iteration.
+
+    Halko, Martinsson & Tropp (2011): Gaussian sketch ``Y = A Omega`` of
+    ``k + n_oversamples`` columns, ``n_power_iter`` QR-stabilised subspace
+    iterations (Alg. 4.4), then the exact SVD of the small projected matrix
+    ``B = Q^T A`` (Alg. 5.1), computed with :func:`jacobi_svd`.
+    """
+    m, n = a.shape
+    sketch = min(k + n_oversamples, m, n)
+    rng = np.random.default_rng(seed)
+    q, _ = np.linalg.qr(a @ rng.standard_normal((n, sketch)))
+    for _ in range(n_power_iter):
+        z, _ = np.linalg.qr(a.T @ q)
+        q, _ = np.linalg.qr(a @ z)
+    u_b, s, vt = jacobi_svd(q.T @ a)
+    return (q @ u_b)[:, :k], s[:k], vt[:k]

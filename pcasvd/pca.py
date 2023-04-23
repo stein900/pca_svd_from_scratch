@@ -7,10 +7,10 @@ from typing import Literal
 import numpy as np
 from numpy.typing import ArrayLike
 
-from .linalg import EPS, Array, jacobi_svd, power_iteration_eigh, sign_flip
+from .linalg import EPS, Array, jacobi_svd, power_iteration_eigh, randomized_svd, sign_flip
 
-Solver = Literal["svd", "covariance_eigh", "jacobi", "power"]
-SOLVERS: tuple[Solver, ...] = ("svd", "covariance_eigh", "jacobi", "power")
+Solver = Literal["svd", "covariance_eigh", "jacobi", "power", "randomized"]
+SOLVERS: tuple[Solver, ...] = ("svd", "covariance_eigh", "jacobi", "power", "randomized")
 
 
 class PCA:
@@ -28,6 +28,7 @@ class PCA:
         ``"jacobi"``          from scratch: exact SVD by one-sided Jacobi rotations.
         ``"power"``           from scratch: power iteration with deflation on the
                               smaller of the scatter / Gram matrices.
+        ``"randomized"``      from scratch: Halko et al. randomized SVD.
     whiten:
         If True, :meth:`transform` rescales every component to unit variance.
     tol, max_iter:
@@ -94,6 +95,12 @@ class PCA:
         if self.solver == "jacobi":
             _, s, vt = jacobi_svd(xc)
             return s[:k], vt[:k]
+        if self.solver == "randomized":
+            _, s, vt = randomized_svd(
+                xc, k, n_oversamples=self.n_oversamples, n_power_iter=self.n_power_iter, seed=self.random_state
+            )
+            return s, vt
+
         # Eigen-solvers work on the smaller of the two cross-product matrices.
         gram = n < p
         cross = xc @ xc.T if gram else xc.T @ xc  # eigenvalues are sigma_i^2
