@@ -1,10 +1,13 @@
 # PCA / SVD from scratch
 
-Principal component analysis in NumPy, with the linear algebra written out
-instead of calling a solver and moving on.
+NumPy PCA with a scikit-learn-style `fit` / `transform` API. Solvers so far:
+LAPACK SVD, the Gram-matrix eigen-decomposition, a one-sided Jacobi SVD and
+power iteration with deflation.
 
-The first target is a Jacobi SVD and a check that it matches LAPACK on
-small matrices.
+```bash
+python -m pip install -r requirements.txt
+python -m pytest
+```
 
 ## License
 
