@@ -1,4 +1,7 @@
 numpy>=1.26
 scipy>=1.11
 scikit-learn>=1.5
+matplotlib>=3.8
+pillow>=10.1
+pooch>=1.7
 pytest>=8.0
