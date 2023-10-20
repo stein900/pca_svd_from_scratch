@@ -1,6 +1,6 @@
 [project]
 name = "pcasvd"
-version = "0.9.0"
+version = "1.0.0"
 description = "PCA / SVD from scratch in NumPy: exact, iterative and randomized solvers, eigenfaces and sklearn comparison."
 readme = "README.md"
 license = { text = "MIT" }
